@@ -1,0 +1,6 @@
+  applications:
+  - name: "IBM Bot"
+    random-route: true
+    memory: 256M
+    path: target/dw-1.0.war
+    buildpack: java_buildpack
