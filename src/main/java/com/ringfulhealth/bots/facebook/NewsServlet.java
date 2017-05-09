@@ -14,6 +14,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.io.*;
+import java.net.*;
+
+import java.net.HttpURLConnection;
+import javax.net.ssl.HttpsURLConnection;
+
+import org.json.*;
+
+
+
+// import org.apache.http.*;
+// import org.apache.http.client.methods.HttpGet;
+// import org.apache.http.impl.client.DefaultHttpClient;
+// import org.apache.http.util.EntityUtils;
+
+
 public class NewsServlet extends BaseServlet {
 
     public NewsServlet () {
@@ -35,6 +51,8 @@ public class NewsServlet extends BaseServlet {
     private EntityManagerFactory emf;
 
     public Object converse (String human, ConcurrentHashMap<String, Object> context) {
+        String google_api_key = "AIzaSyBOsJffpfrjizZFced5a4CuwSjXc2NRgAc";
+
         System.out.println("IBMdWServlet converse: " + human);
 
         // if (emf == null) {
@@ -449,7 +467,192 @@ public class NewsServlet extends BaseServlet {
             return "I'm here to help you get involved in local politics.";
         } else if (human.equalsIgnoreCase("Hi")) {
             return "Hello, citizen.";
+        } else if (human.equalsIgnoreCase("Where is my polling location?")) {
+            return "Pls give me your address, prefaced by 'Address:'. Here's an example: 'Address: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+        } else if (human.startsWith("Address") || human.startsWith("address")) {
+            //get rid of the word "address:" in the human query
+            String [] splitHuman = human.split(":"); 
+            
+            //get rid of all punctuation
+            // to look like this
+            // 1234 Westwood Blvd
+            // Los Angeles
+            // CA 90024
+            // String [] commaSplitHuman = splitHuman[1].split(",");
+
+            //looks like this now 
+            //1234 Westwood Blvc
+            //Los Angeles
+            //CA
+            // for (String s : commaSplitHuman) {
+            //     s = s.trim(); 
+            // }
+
+
+            // //replace space with %20
+            // for (String s : commaSplitHuman) {
+            //     s = s.replace(" ", "%20");
+            // }
+
+            // //smoosh string[] back into a string 
+            // String address = "";
+            // for (String s : commaSplitHuman) {
+            //     address += (s + "%20");
+            // }
+
+
+            String address = splitHuman[1];
+            String encodedUrl = null;
+
+            try {
+                encodedUrl = URLEncoder.encode(address, "UTF-8");
+            } catch (UnsupportedEncodingException ignored) {
+                // Can be safely ignored because UTF-8 is always supported
+            }
+
+            //send it to google 
+            String urlString = "https://www.googleapis.com/civicinfo/v2/voterinfo?key=" + google_api_key + "&address=" + encodedUrl + "&electionId=2000";
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+                // optional default is GET
+                con.setRequestMethod("GET");
+
+                //add request header
+                con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+                int responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                    // System.out.println(inputLine);
+                }
+                in.close();
+
+
+                JSONTokener tokener = new JSONTokener(response.toString());
+                JSONObject obj = new JSONObject(tokener);
+
+                // JSONObject obj = new JSONObject(response);
+                System.out.println("got the root object");
+                System.out.println(obj);
+
+                JSONArray pollingLocations = obj.getJSONArray("pollingLocations");
+
+                //pollingAddress
+                JSONObject addressInfoObj = (JSONObject) pollingLocations.get(0);
+                System.out.println("got the address object" + addressInfoObj);
+
+                JSONObject addressInfo = (JSONObject) addressInfoObj.getJSONObject("address");
+                System.out.println("got the specific info object" + addressInfo); 
+
+                String locationName = addressInfo.getString("locationName");
+                String line1 = addressInfo.getString("line1");
+                String city = addressInfo.getString("city");
+                String state = addressInfo.getString("state");
+                String zip = addressInfo.getString("zip");
+
+                System.out.println("name:" + locationName);
+
+                //polling notes:
+                // JSONObject pollingNotesObj = (JSONObject) addressInfoObj.getJSONObject("notes");
+                String pollingNotes = addressInfoObj.getString("notes");
+                
+                System.out.println("polling notes:" + pollingNotes);
+                
+                //polling hours:
+                // JSONObject pollingHoursObj = (JSONObject) addressInfoObj.getJSONObject("pollingHours");
+                String pollingHours = addressInfoObj.getString("pollingHours");
+
+                System.out.println("polling hours: " + pollingHours);
+
+                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + "."; 
+
+                return responseToHuman;
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            //print result
+            // System.out.println(response.toString());
+            return "heehoo";
+
         }
+
+
+
+
+        //         DefaultHttpClient httpClient = new DefaultHttpClient();
+        //         HttpGet getRequest = new HttpGet(urlString);
+        //         getRequest.addHeader("accept", "application/json");
+
+        //         HttpResponse response = httpClient.execute(getRequest);
+
+        //         if (response.getStatusLine().getStatusCode() != 200) {
+        //             throw new RuntimeException("Failed : HTTP error code : "
+        //                + response.getStatusLine().getStatusCode());
+        //         }
+
+        //         BufferedReader br = new BufferedReader(
+        //                          new InputStreamReader((response.getEntity().getContent())));
+
+        //         String output;
+        //         System.out.println("Output from Server .... \n");
+        //         while ((output = br.readLine()) != null) {
+        //             System.out.println(output);
+        //         }
+        //         return "worked!";
+
+        //         httpClient.getConnectionManager().shutdown();
+
+        //     } 
+        //     catch (ClientProtocolException e) {
+        //         e.printStackTrace();
+        //     } 
+        //     catch (IOException e) {
+        //         e.printStackTrace();
+        //     }
+
+        // }
+
+
+
+
+
+            //     System.out.println(url);
+            //     conn.setRequestMethod("GET");
+
+            //     if (conn.getResponseCode() != 200) {
+
+            //         return "Failed : HTTP error code : " + conn.getResponseCode();
+            //     }
+
+
+            //     //get a response back
+            //     StringBuilder sb = new StringBuilder();
+            //     BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            //     String l = null; 
+            //     while ((l=br.readLine()) != null) {
+            //         System.out.println(l);
+            //         sb.append(l);
+            //     }
+            //     br.close();
+
+            //     format the response and send it back to user
+            //     return sb;
+            // } catch (IOException e) {
+            //     System.out.println("hehe hoohoo u made a poopoo");
+            //     System.out.println("Exception: ");
+            //     System.out.println(e);
+            // }
+        // }
         
         return "Whoops! I don't know what you just said";
 
