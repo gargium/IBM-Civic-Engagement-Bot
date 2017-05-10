@@ -468,10 +468,12 @@ public class NewsServlet extends BaseServlet {
         } else if (human.equalsIgnoreCase("Hi")) {
             return "Hello, citizen.";
         } else if (human.equalsIgnoreCase("Where is my polling location?")) {
-            return "Pls give me your address, prefaced by 'Address:'. Here's an example: 'Address: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+            return "Please give me your address, prefaced by 'Polling Location:'. Here's an example: 'Polling Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if(human.equalsIgnoreCase("Who are my representatives?")) {
-            return "Pls give me your address, prefaced by 'Location:'. Here's an example: 'Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
-        } else if (human.startsWith("Address") || human.startsWith("address")) {
+            return "Please give me your address, prefaced by 'Reps:'. Here's an example: 'Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+        } else if(human.equalsIgnoreCase("How do I contact my representatives?")) {
+            return "Please give me your address, prefaced by 'Contact Reps:'. Here's an example: 'Contact Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+        } else if (human.startsWith("Polling Location") || human.startsWith("polling location")) {
             //get rid of the word "address:" in the human query
             String [] splitHuman = human.split(":"); 
             
@@ -591,36 +593,10 @@ public class NewsServlet extends BaseServlet {
             // System.out.println(response.toString());
             return "heehoo";
 
-        } else if (human.startsWith("Location") || human.startsWith("location")) {
-            //get rid of the word "address:" in the human query
+        } else if (human.startsWith("Reps") || human.startsWith("reps")) {
+            
             String [] splitHuman = human.split(":"); 
             
-            //get rid of all punctuation
-            // to look like this
-            // 1234 Westwood Blvd
-            // Los Angeles
-            // CA 90024
-            // String [] commaSplitHuman = splitHuman[1].split(",");
-
-            //looks like this now 
-            //1234 Westwood Blvc
-            //Los Angeles
-            //CA
-            // for (String s : commaSplitHuman) {
-            //     s = s.trim(); 
-            // }
-
-
-            // //replace space with %20
-            // for (String s : commaSplitHuman) {
-            //     s = s.replace(" ", "%20");
-            // }
-
-            // //smoosh string[] back into a string 
-            // String address = "";
-            // for (String s : commaSplitHuman) {
-            //     address += (s + "%20");
-            // }
 
 
             String address = splitHuman[1];
@@ -707,7 +683,103 @@ public class NewsServlet extends BaseServlet {
             // System.out.println(response.toString());
             return "heehoo";
 
-        } 
+        } else if (human.startsWith("Contact Reps") || human.startsWith("contact reps")) {
+            
+            String [] splitHuman = human.split(":"); 
+            
+
+
+            String address = splitHuman[1];
+            String encodedUrl = null;
+
+            try {
+                encodedUrl = URLEncoder.encode(address, "UTF-8");
+            } catch (UnsupportedEncodingException ignored) {
+                // Can be safely ignored because UTF-8 is always supported
+            }
+
+            //send it to google 
+            String urlString = "https://www.googleapis.com/civicinfo/v2/voterinfo?key=" + google_api_key + "&address=" + encodedUrl + "&electionId=2000";
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+                // optional default is GET
+                con.setRequestMethod("GET");
+
+                //add request header
+                con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+                int responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                    // System.out.println(inputLine);
+                }
+                in.close();
+
+
+                JSONTokener tokener = new JSONTokener(response.toString());
+                JSONObject obj = new JSONObject(tokener);
+
+
+
+                
+                JSONArray representatives = obj.getJSONArray("contests");
+
+                //respresentativesInfo
+                JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
+
+            
+                JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
+                
+
+                String profile = "";
+                for(int i = 0; i < representativesInfo.length(); i++){
+                    JSONObject firstRep = (JSONObject) representativesInfo.get(i);
+                    JSONArray channels = (JSONArray) firstRep.getJSONArray("channels");
+                    String channelString = "";
+                    for(int j = 0; j < channels.length(); j++){
+                        JSONObject firstChannel = (JSONObject) channels.get(j);
+                        String nextPunc = ", ";
+                        if(j == (representativesInfo.length() - 1)){
+                            nextPunc = "\n";
+                        }
+                        channelString += firstChannel.getString("type") + " - " + firstChannel.getString("id") + nextPunc;
+                    }
+                    String nextPunc = "\n";
+                    if(i == (representativesInfo.length() - 1)){
+                        nextPunc = "";
+                    }
+                    profile += firstRep.getString("name") + ": \nWebsite - " + firstRep.getString("candidateUrl") + ", " + channelString + nextPunc;
+                }
+                
+
+
+
+            
+
+                String responseToHuman = profile; 
+
+                return responseToHuman;
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            //print result
+            // System.out.println(response.toString());
+            return "heehoo";
+
+        }
+
+
+
 
 
 
