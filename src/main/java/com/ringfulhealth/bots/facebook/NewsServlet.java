@@ -469,6 +469,8 @@ public class NewsServlet extends BaseServlet {
             return "Hello, citizen.";
         } else if (human.equalsIgnoreCase("Where is my polling location?")) {
             return "Pls give me your address, prefaced by 'Address:'. Here's an example: 'Address: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+        } else if(human.equalsIgnoreCase("Who are my representatives?")) {
+            return "Pls give me your address, prefaced by 'Location:'. Here's an example: 'Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if (human.startsWith("Address") || human.startsWith("address")) {
             //get rid of the word "address:" in the human query
             String [] splitHuman = human.split(":"); 
@@ -545,19 +547,31 @@ public class NewsServlet extends BaseServlet {
                 System.out.println(obj);
 
                 JSONArray pollingLocations = obj.getJSONArray("pollingLocations");
+                JSONArray representatives = obj.getJSONArray("contests");
 
                 //pollingAddress
                 JSONObject addressInfoObj = (JSONObject) pollingLocations.get(0);
-                System.out.println("got the address object" + addressInfoObj);
+            
+
+                //respresentativesInfo
+                JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
 
                 JSONObject addressInfo = (JSONObject) addressInfoObj.getJSONObject("address");
-                System.out.println("got the specific info object" + addressInfo); 
+                JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
+                JSONObject firstRep = (JSONObject) representativesInfo.get(0);
+
+
 
                 String locationName = addressInfo.getString("locationName");
                 String line1 = addressInfo.getString("line1");
                 String city = addressInfo.getString("city");
                 String state = addressInfo.getString("state");
                 String zip = addressInfo.getString("zip");
+
+                //String name = representativesInfo.get(0).getString("name");
+                //JSONObject firstRep = (JSONObject) representativesInfo.get(0);
+
+                String name = firstRep.getString("name");
 
                 System.out.println("name:" + locationName);
 
@@ -573,7 +587,7 @@ public class NewsServlet extends BaseServlet {
 
                 System.out.println("polling hours: " + pollingHours);
 
-                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + "."; 
+                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + ". Your representative is " + name; 
 
                 return responseToHuman;
             } 
@@ -584,7 +598,123 @@ public class NewsServlet extends BaseServlet {
             // System.out.println(response.toString());
             return "heehoo";
 
-        }
+        } else if (human.startsWith("Location") || human.startsWith("location")) {
+            //get rid of the word "address:" in the human query
+            String [] splitHuman = human.split(":"); 
+            
+            //get rid of all punctuation
+            // to look like this
+            // 1234 Westwood Blvd
+            // Los Angeles
+            // CA 90024
+            // String [] commaSplitHuman = splitHuman[1].split(",");
+
+            //looks like this now 
+            //1234 Westwood Blvc
+            //Los Angeles
+            //CA
+            // for (String s : commaSplitHuman) {
+            //     s = s.trim(); 
+            // }
+
+
+            // //replace space with %20
+            // for (String s : commaSplitHuman) {
+            //     s = s.replace(" ", "%20");
+            // }
+
+            // //smoosh string[] back into a string 
+            // String address = "";
+            // for (String s : commaSplitHuman) {
+            //     address += (s + "%20");
+            // }
+
+
+            String address = splitHuman[1];
+            String encodedUrl = null;
+
+            try {
+                encodedUrl = URLEncoder.encode(address, "UTF-8");
+            } catch (UnsupportedEncodingException ignored) {
+                // Can be safely ignored because UTF-8 is always supported
+            }
+
+            //send it to google 
+            String urlString = "https://www.googleapis.com/civicinfo/v2/voterinfo?key=" + google_api_key + "&address=" + encodedUrl + "&electionId=2000";
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+                // optional default is GET
+                con.setRequestMethod("GET");
+
+                //add request header
+                con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+                int responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                    // System.out.println(inputLine);
+                }
+                in.close();
+
+
+                JSONTokener tokener = new JSONTokener(response.toString());
+                JSONObject obj = new JSONObject(tokener);
+
+
+
+                
+                JSONArray representatives = obj.getJSONArray("contests");
+
+                //respresentativesInfo
+                JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
+
+            
+                JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
+                
+
+                String profile = "";
+                for(int i = 0; i < representativesInfo.length(); i++){
+                    JSONObject firstRep = (JSONObject) representativesInfo.get(i);
+                    if(representativesInfo.length() == 1){
+                        profile = firstRep.getString("name") + " (" + firstRep.getString("party") + ").";
+                    }
+                    else if (representativesInfo.length() == 2 && i == 0){
+                        profile += firstRep.getString("name") + " (" + firstRep.getString("party") + ") ";
+                    }
+                    else if(i == (representativesInfo.length() - 1)){
+                        profile += "and " + firstRep.getString("name") + " (" + firstRep.getString("party") + ").";
+                    }
+                    else{
+                        profile += firstRep.getString("name") + " (" + firstRep.getString("party") + "), ";
+                    }
+                }
+                
+
+
+
+            
+
+                String responseToHuman = "Your representatives are " + profile; 
+
+                return responseToHuman;
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            //print result
+            // System.out.println(response.toString());
+            return "heehoo";
+
+        } 
 
 
 
