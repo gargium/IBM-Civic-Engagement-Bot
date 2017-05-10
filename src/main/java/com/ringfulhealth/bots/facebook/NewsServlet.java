@@ -547,18 +547,13 @@ public class NewsServlet extends BaseServlet {
                 System.out.println(obj);
 
                 JSONArray pollingLocations = obj.getJSONArray("pollingLocations");
-                JSONArray representatives = obj.getJSONArray("contests");
 
                 //pollingAddress
                 JSONObject addressInfoObj = (JSONObject) pollingLocations.get(0);
             
 
-                //respresentativesInfo
-                JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
-
                 JSONObject addressInfo = (JSONObject) addressInfoObj.getJSONObject("address");
-                JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
-                JSONObject firstRep = (JSONObject) representativesInfo.get(0);
+                
 
 
 
@@ -570,8 +565,6 @@ public class NewsServlet extends BaseServlet {
 
                 //String name = representativesInfo.get(0).getString("name");
                 //JSONObject firstRep = (JSONObject) representativesInfo.get(0);
-
-                String name = firstRep.getString("name");
 
                 System.out.println("name:" + locationName);
 
@@ -587,7 +580,7 @@ public class NewsServlet extends BaseServlet {
 
                 System.out.println("polling hours: " + pollingHours);
 
-                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + ". Your representative is " + name; 
+                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + "."; 
 
                 return responseToHuman;
             } 
