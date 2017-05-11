@@ -748,7 +748,7 @@ public class NewsServlet extends BaseServlet {
                     for(int j = 0; j < channels.length(); j++){
                         JSONObject firstChannel = (JSONObject) channels.get(j);
                         String nextPunc = ", ";
-                        if(j == (representativesInfo.length() - 1)){
+                        if(j == (channels.length() - 1)){
                             nextPunc = "\n";
                         }
                         channelString += firstChannel.getString("type") + " - " + firstChannel.getString("id") + nextPunc;
