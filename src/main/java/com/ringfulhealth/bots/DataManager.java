@@ -1,6 +1,7 @@
 package com.ringfulhealth.bots;
 
 import com.sun.syndication.feed.synd.*;
+
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -65,6 +67,40 @@ public class DataManager {
             manager.close();
         }
     }
+    
+    public void saveUserQuery (UserQuery uq) {
+        EntityManager manager = emf.createEntityManager();
+        try {
+            manager.getTransaction().begin();
+            manager.merge(uq);
+            manager.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace ();
+        } finally {
+            manager.close();
+        }
+    }
+    
+    public UserQuery getUserQuery (String fbId) {
+    	System.out.println("Got to getUserQuery with fbId" + fbId);
+    	System.out.println("emf " + emf.toString());
+    	EntityManager manager = emf.createEntityManager();
+    	 try {
+             Query query = manager.createQuery("select u from UserQuery u where u.userId=:fbId");
+             query.setParameter("fbId", fbId);
+
+             List<UserQuery> users = query.getResultList();
+             if (users == null || users.isEmpty()) {
+                 return null;
+             } else {
+                 return users.get(0);
+             }
+         } finally {
+             manager.close();
+         }
+    }
+    
+    
 
     public User getFbUser (String fbId) {
         EntityManager manager = emf.createEntityManager();

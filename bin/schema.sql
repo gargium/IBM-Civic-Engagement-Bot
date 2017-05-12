@@ -47,3 +47,12 @@ ENGINE = InnoDB
 AUTO_INCREMENT = 1
 DEFAULT CHARACTER SET = utf8;
 
+CREATE  TABLE IF NOT EXISTS `usersquery` (
+  `userId` BIGINT(20) NOT NULL,
+  `lastQueryType` INT,
+  `lastQueryText` VARCHAR(256),
+   PRIMARY KEY (`userId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 1
+DEFAULT CHARACTER SET = utf8;
+

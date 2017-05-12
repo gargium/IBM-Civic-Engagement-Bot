@@ -4,20 +4,21 @@ import com.ringfulhealth.bots.Constants;
 import com.ringfulhealth.bots.DataManager;
 import com.ringfulhealth.bots.NewsItem;
 import com.ringfulhealth.bots.User;
+import com.ringfulhealth.bots.UserQuery;
 import com.ringfulhealth.chatbotbook.facebook.BaseServlet;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.persistence.EntityManagerFactory;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import java.io.*;
 import java.net.*;
 
-import java.net.HttpURLConnection;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.json.*;
@@ -54,18 +55,27 @@ public class NewsServlet extends BaseServlet {
         String google_api_key = "AIzaSyBOsJffpfrjizZFced5a4CuwSjXc2NRgAc";
 
         System.out.println("IBMdWServlet converse: " + human);
-
-        // if (emf == null) {
-        //     // This is for Tomcat
-        //     emf = (EntityManagerFactory) getServletContext().getAttribute("emf");
-        // }
-        // DataManager dm = new DataManager (emf);
-
-        // boolean new_user = false;
-        // User user = dm.getFbUser((String) context.get("sender_id"));
-        // if (user == null) {
-        //     user = new User ();
-        //     user.setFbId((String) context.get("sender_id"));
+//        System.out.println("context map: ");
+//        for (String key : context.keySet()) {
+//            System.out.println(key + " " + context.get(key));
+//        }
+//
+//         if (emf == null) {
+//             // This is for Tomcat
+//             emf = (EntityManagerFactory) getServletContext().getAttribute("emf");
+//         }
+//         System.out.println("emf " + emf.toString());
+//         DataManager dm = new DataManager (emf);
+//
+//         boolean new_user = false;
+////         User user = dm.getFbUser((String) context.get("sender_id"));
+//         UserQuery uq = dm.getUserQuery((String) context.get("sender_id"));
+//         if (uq == null) {
+////             user = new User ();
+////             user.setFbId((String) context.get("sender_id"));
+//             uq = new UserQuery();
+//             uq.setUserId((String) context.get("sender_id"));
+             
 
         //     HashMap profile = getUserProfile(user.getFbId());
         //     if (profile != null && !profile.isEmpty()) {
@@ -82,9 +92,10 @@ public class NewsServlet extends BaseServlet {
         //         }
         //     }
 
-        //     dm.saveUser(user);
-        //     new_user = true;
-        // }
+//             dm.saveUser(user);
+//             dm.saveUserQuery(uq);
+//             new_user = true;
+//         }
         // List <String> faves = user.getFavesList();
 
         // if (human.equalsIgnoreCase("stop")) {
@@ -468,6 +479,9 @@ public class NewsServlet extends BaseServlet {
         } else if (human.equalsIgnoreCase("Hi")) {
             return "Hello, citizen.";
         } else if (human.equalsIgnoreCase("Where is my polling location?")) {
+//        	uq.setLastQueryText(human);
+//        	uq.setLastQueryType(uq.POLLING_LOCATION);
+//        	dm.saveUserQuery(uq);
             return "Please give me your address, prefaced by 'Polling Location:'. Here's an example: 'Polling Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if(human.equalsIgnoreCase("Who are my representatives?")) {
             return "Please give me your address, prefaced by 'Reps:'. Here's an example: 'Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
@@ -591,7 +605,7 @@ public class NewsServlet extends BaseServlet {
             }
             //print result
             // System.out.println(response.toString());
-            return "heehoo";
+            return "Sorry! It appears that was an invalid request!";
 
         } else if (human.startsWith("Reps") || human.startsWith("reps")) {
             

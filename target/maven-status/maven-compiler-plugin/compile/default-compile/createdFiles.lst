@@ -24,10 +24,12 @@ com/ringfulhealth/chatbotbook/slack/channel/EchoServlet.class
 com/ringfulhealth/chatbotbook/slack/command/EchoServlet.class
 com/ringfulhealth/chatbotbook/slack/channel/GreetServlet.class
 com/ringfulhealth/bots/slack/SendNewsWorker.class
+com/ringfulhealth/bots/UserQuery.class
 com/ringfulhealth/chatbotbook/slack/channel/BaseServlet.class
 com/ringfulhealth/bots/slack/NewsServlet$4.class
 com/ringfulhealth/bots/DataManager.class
 com/ringfulhealth/bots/facebook/NewsServlet.class
+com/ringfulhealth/bots/facebook/NewsServletTest.class
 com/ringfulhealth/bots/slack/NewsServlet$7.class
 com/ringfulhealth/chatbotbook/slack/command/GreetServlet.class
 com/ringfulhealth/bots/User.class
