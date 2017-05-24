@@ -482,12 +482,15 @@ public class NewsServlet extends BaseServlet {
 //        	uq.setLastQueryText(human);
 //        	uq.setLastQueryType(uq.POLLING_LOCATION);
 //        	dm.saveUserQuery(uq);
-            return "Please give me your address, prefaced by 'Polling Location:'. Here's an example: 'Polling Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+            return "Please give me your address, prefaced by 'Polling Location:'. For example: 'Polling Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if(human.equalsIgnoreCase("Who are my representatives?")) {
-            return "Please give me your address, prefaced by 'Reps:'. Here's an example: 'Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+            return "Please give me your address, prefaced by 'Reps:'. For example: 'Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if(human.equalsIgnoreCase("How do I contact my representatives?")) {
-            return "Please give me your address, prefaced by 'Contact Reps:'. Here's an example: 'Contact Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
-        } else if (human.startsWith("Polling Location") || human.startsWith("polling location")) {
+            return "Please give me your address, prefaced by 'Contact Reps:'. For example: 'Contact Reps: 1234 Westwood Blvd, Los Angeles, CA 90024'";
+        } else if(human.equalsIgnoreCase("I want to know about recent bills")) {
+            return "Of course. Please type in the issue you want to know about, prefaced by 'Issue:'. For example: 'Issue: health care' or 'Issue: guns'";
+        } 
+        else if (human.startsWith("Polling Location") || human.startsWith("polling location")) {
             //get rid of the word "address:" in the human query
             String [] splitHuman = human.split(":"); 
             
@@ -700,8 +703,6 @@ public class NewsServlet extends BaseServlet {
         } else if (human.startsWith("Contact Reps") || human.startsWith("contact reps")) {
             
             String [] splitHuman = human.split(":"); 
-            
-
 
             String address = splitHuman[1];
             String encodedUrl = null;
@@ -742,17 +743,12 @@ public class NewsServlet extends BaseServlet {
                 JSONTokener tokener = new JSONTokener(response.toString());
                 JSONObject obj = new JSONObject(tokener);
 
-
-
-                
                 JSONArray representatives = obj.getJSONArray("contests");
 
                 //respresentativesInfo
                 JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
 
-            
                 JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
-                
 
                 String profile = "";
                 for(int i = 0; i < representativesInfo.length(); i++){
@@ -774,11 +770,6 @@ public class NewsServlet extends BaseServlet {
                     profile += firstRep.getString("name") + ": \nWebsite - " + firstRep.getString("candidateUrl") + ", " + channelString + nextPunc;
                 }
                 
-
-
-
-            
-
                 String responseToHuman = profile; 
 
                 return responseToHuman;
@@ -790,8 +781,86 @@ public class NewsServlet extends BaseServlet {
             // System.out.println(response.toString());
             return "heehoo";
 
-        }
+        }  else if (human.startsWith("Issue") || human.startsWith("issue")) {
+           String [] splitHuman = human.split(":"); 
 
+            String issue = splitHuman[1];
+            String encodedUrl = null;
+
+            try {
+                encodedUrl = URLEncoder.encode(issue, "UTF-8");
+            } catch (UnsupportedEncodingException ignored) {
+                // Can be safely ignored because UTF-8 is always supported
+            }
+
+            //https://congress.api.sunlightfoundation.com/bills/search?query=%22health%20care%22&history.active=true&order=last_action_at
+            //send it to civic information api 
+            String urlString = "https://congress.api.sunlightfoundation.com/bills/search?query=" + issue + "&history.active=true&order=last_action_at";
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+                // optional default is GET
+                con.setRequestMethod("GET");
+
+                //add request header
+                con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+                int responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                    // System.out.println(inputLine);
+                }
+                in.close();
+
+
+                JSONTokener tokener = new JSONTokener(response.toString());
+                JSONObject obj = new JSONObject(tokener);
+
+                JSONArray billResults = obj.getJSONArray("results");
+                int arraySize = billResults.length();
+                int max = (5 < billResults.length()) ? 5 : billResults.length(); 
+
+                //billInfo
+                ArrayList<String> bills = new ArrayList<String>();
+                for (int i = 0; i < max; i++) {
+                    JSONObject billInfoObj = (JSONObject) billResults.get(i);
+                    String title = billInfoObj.getString("short_title");
+                    if (title == null || title == "null") {
+                        title = billInfoObj.getString("popular_title"); 
+                        if (title == null || title == "null") {
+                            title = billInfoObj.getString("official_title");
+                        }
+                    }
+                    StringBuilder sb = new StringBuilder(title);
+                    StringBuilder formattedTitle = sb.insert(0, "Title " + (i+1) + ": ");
+                    bills.add(formattedTitle.toString());
+                }
+
+                String responseToHuman = ""; 
+                for (String b : bills) {
+                    responseToHuman += (b + "\n\n"); 
+                } 
+                responseToHuman += "\n\nIf you would like to know more about any of these, please type in name of the bill as follows: 'Summary: name_of_bill'";
+
+                return responseToHuman;
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            //print result
+            // System.out.println(response.toString());
+            return "heehoo";
+
+
+        }
 
 
 
