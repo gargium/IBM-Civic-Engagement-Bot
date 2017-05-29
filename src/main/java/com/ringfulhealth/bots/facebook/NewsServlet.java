@@ -475,7 +475,7 @@ public class NewsServlet extends BaseServlet {
         // }
 
         if (human.equalsIgnoreCase("Help")) {
-            return "I'm here to help you get involved in local politics. Here are some sample queries you can make:";
+            return "I'm here to help you get involved in local politics. Here are some sample queries you can make:\n Where is my polling location?\n Who are my representatives?\n How do I contact my representatives?\n I want to know about recent bills.";
         } else if (human.equalsIgnoreCase("Hi")) {
             return "Hello, citizen.";
         } else if (human.equalsIgnoreCase("Where is my polling location?")) {
