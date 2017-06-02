@@ -4,6 +4,9 @@ import com.ringfulhealth.bots.Constants;
 import com.ringfulhealth.bots.DataManager;
 import com.ringfulhealth.bots.NewsItem;
 import com.ringfulhealth.bots.User;
+import com.ibm.watson.developer_cloud.conversation.v1.ConversationService;
+import com.ibm.watson.developer_cloud.conversation.v1.model.MessageRequest;
+import com.ibm.watson.developer_cloud.conversation.v1.model.MessageResponse;
 import com.ringfulhealth.chatbotbook.facebook.BaseServlet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -463,18 +466,33 @@ public class NewsServlet extends BaseServlet {
         //     // return showNews("Sorry, I cannot understand you. Try HELP to see a menu of options. Below are the latest articles ", faves, dm);
         // }
 
+        // nlp
+        ConversationService service = new ConversationService("2017-05-26");
+        // username & password from workspace
+        service.setUsernameAndPassword("705e632d-341d-45be-9363-f98e30207ed3", "3Ozmm3P4SrjG");
+
+        // MessageRequest newMessage = new MessageRequest.Builder().inputText("Help").build();
+        // MessageResponse response = service.message("05801e3a-dbd2-4f03-98d9-a2303b02ab55", newMessage).execute();
+        // System.out.println(response);
+
+
+
         if (human.equalsIgnoreCase("Help")) {
             return "I'm here to help you get involved in local politics.";
         } else if (human.equalsIgnoreCase("Hi")) {
-            return "Hello, citizen.";
+            MessageRequest newMessage = new MessageRequest.Builder().inputText("Hi").build();
+            MessageResponse response = service.message("05801e3a-dbd2-4f03-98d9-a2303b02ab55", newMessage).execute();
+            System.out.println(response);
+            return response.getTextConcatenated("|");
+            //return "Hello, citizen.";
         } else if (human.equalsIgnoreCase("Where is my polling location?")) {
             return "Pls give me your address, prefaced by 'Address:'. Here's an example: 'Address: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if(human.equalsIgnoreCase("Who are my representatives?")) {
             return "Pls give me your address, prefaced by 'Location:'. Here's an example: 'Location: 1234 Westwood Blvd, Los Angeles, CA 90024'";
         } else if (human.startsWith("Address") || human.startsWith("address")) {
             //get rid of the word "address:" in the human query
-            String [] splitHuman = human.split(":"); 
-            
+            String [] splitHuman = human.split(":");
+
             //get rid of all punctuation
             // to look like this
             // 1234 Westwood Blvd
@@ -482,12 +500,12 @@ public class NewsServlet extends BaseServlet {
             // CA 90024
             // String [] commaSplitHuman = splitHuman[1].split(",");
 
-            //looks like this now 
+            //looks like this now
             //1234 Westwood Blvc
             //Los Angeles
             //CA
             // for (String s : commaSplitHuman) {
-            //     s = s.trim(); 
+            //     s = s.trim();
             // }
 
 
@@ -496,7 +514,7 @@ public class NewsServlet extends BaseServlet {
             //     s = s.replace(" ", "%20");
             // }
 
-            // //smoosh string[] back into a string 
+            // //smoosh string[] back into a string
             // String address = "";
             // for (String s : commaSplitHuman) {
             //     address += (s + "%20");
@@ -512,7 +530,7 @@ public class NewsServlet extends BaseServlet {
                 // Can be safely ignored because UTF-8 is always supported
             }
 
-            //send it to google 
+            //send it to google
             String urlString = "https://www.googleapis.com/civicinfo/v2/voterinfo?key=" + google_api_key + "&address=" + encodedUrl + "&electionId=2000";
             try {
                 URL url = new URL(urlString);
@@ -550,10 +568,10 @@ public class NewsServlet extends BaseServlet {
 
                 //pollingAddress
                 JSONObject addressInfoObj = (JSONObject) pollingLocations.get(0);
-            
+
 
                 JSONObject addressInfo = (JSONObject) addressInfoObj.getJSONObject("address");
-                
+
 
 
 
@@ -571,19 +589,19 @@ public class NewsServlet extends BaseServlet {
                 //polling notes:
                 // JSONObject pollingNotesObj = (JSONObject) addressInfoObj.getJSONObject("notes");
                 String pollingNotes = addressInfoObj.getString("notes");
-                
+
                 System.out.println("polling notes:" + pollingNotes);
-                
+
                 //polling hours:
                 // JSONObject pollingHoursObj = (JSONObject) addressInfoObj.getJSONObject("pollingHours");
                 String pollingHours = addressInfoObj.getString("pollingHours");
 
                 System.out.println("polling hours: " + pollingHours);
 
-                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + "."; 
+                String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + ".";
 
                 return responseToHuman;
-            } 
+            }
             catch (Exception e) {
                 e.printStackTrace();
             }
@@ -593,8 +611,8 @@ public class NewsServlet extends BaseServlet {
 
         } else if (human.startsWith("Location") || human.startsWith("location")) {
             //get rid of the word "address:" in the human query
-            String [] splitHuman = human.split(":"); 
-            
+            String [] splitHuman = human.split(":");
+
             //get rid of all punctuation
             // to look like this
             // 1234 Westwood Blvd
@@ -602,12 +620,12 @@ public class NewsServlet extends BaseServlet {
             // CA 90024
             // String [] commaSplitHuman = splitHuman[1].split(",");
 
-            //looks like this now 
+            //looks like this now
             //1234 Westwood Blvc
             //Los Angeles
             //CA
             // for (String s : commaSplitHuman) {
-            //     s = s.trim(); 
+            //     s = s.trim();
             // }
 
 
@@ -616,7 +634,7 @@ public class NewsServlet extends BaseServlet {
             //     s = s.replace(" ", "%20");
             // }
 
-            // //smoosh string[] back into a string 
+            // //smoosh string[] back into a string
             // String address = "";
             // for (String s : commaSplitHuman) {
             //     address += (s + "%20");
@@ -632,7 +650,7 @@ public class NewsServlet extends BaseServlet {
                 // Can be safely ignored because UTF-8 is always supported
             }
 
-            //send it to google 
+            //send it to google
             String urlString = "https://www.googleapis.com/civicinfo/v2/voterinfo?key=" + google_api_key + "&address=" + encodedUrl + "&electionId=2000";
             try {
                 URL url = new URL(urlString);
@@ -664,15 +682,15 @@ public class NewsServlet extends BaseServlet {
 
 
 
-                
+
                 JSONArray representatives = obj.getJSONArray("contests");
 
                 //respresentativesInfo
                 JSONObject representativesInfoObj = (JSONObject) representatives.get(0);
 
-            
+
                 JSONArray representativesInfo = (JSONArray) representativesInfoObj.getJSONArray("candidates");
-                
+
 
                 String profile = "";
                 for(int i = 0; i < representativesInfo.length(); i++){
@@ -690,16 +708,16 @@ public class NewsServlet extends BaseServlet {
                         profile += firstRep.getString("name") + " (" + firstRep.getString("party") + "), ";
                     }
                 }
-                
 
 
 
-            
 
-                String responseToHuman = "Your representatives are " + profile; 
+
+
+                String responseToHuman = "Your representatives are " + profile;
 
                 return responseToHuman;
-            } 
+            }
             catch (Exception e) {
                 e.printStackTrace();
             }
@@ -707,7 +725,7 @@ public class NewsServlet extends BaseServlet {
             // System.out.println(response.toString());
             return "heehoo";
 
-        } 
+        }
 
 
 
@@ -735,10 +753,10 @@ public class NewsServlet extends BaseServlet {
 
         //         httpClient.getConnectionManager().shutdown();
 
-        //     } 
+        //     }
         //     catch (ClientProtocolException e) {
         //         e.printStackTrace();
-        //     } 
+        //     }
         //     catch (IOException e) {
         //         e.printStackTrace();
         //     }
@@ -761,7 +779,7 @@ public class NewsServlet extends BaseServlet {
             //     //get a response back
             //     StringBuilder sb = new StringBuilder();
             //     BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            //     String l = null; 
+            //     String l = null;
             //     while ((l=br.readLine()) != null) {
             //         System.out.println(l);
             //         sb.append(l);
@@ -776,7 +794,7 @@ public class NewsServlet extends BaseServlet {
             //     System.out.println(e);
             // }
         // }
-        
+
         return "Whoops! I don't know what you just said";
 
     }
