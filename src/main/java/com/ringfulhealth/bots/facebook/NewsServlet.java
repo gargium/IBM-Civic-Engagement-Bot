@@ -43,7 +43,8 @@ public class NewsServlet extends BaseServlet {
     public static final String ASK_FOR_LOCATION_MESSAGE = "Please enter your address first, and retry your query.";
 
 
-
+    // context maps an integer (senderId -- each user has its own id) to a Map<String, Object>
+    // representing that user's context.
     private Map<String,Object> context;
     private String google_api_key;
 
@@ -63,11 +64,17 @@ public class NewsServlet extends BaseServlet {
         conv_bluemix_id = Constants.conv_bluemix_id;
 
         context = new HashMap<String, Object>();
-        context.put("location", "");
         google_api_key = "AIzaSyBOsJffpfrjizZFced5a4CuwSjXc2NRgAc";
     }
 
     private EntityManagerFactory emf;
+
+    public void initMyContext(String senderId) {
+      Map<String, Object> myContextMap = new HashMap<String, Object>();
+      myContextMap.put("location", "");
+      myContextMap.put("lastAction", "");
+      context.put(senderId, myContextMap);
+    }
 
     public String handleMultipartAction(String lastAction, String userInput) {
       String out = "";
@@ -422,8 +429,23 @@ public class NewsServlet extends BaseServlet {
          return "";
     }
 
+    // TODO: Andy, put ur code for wiki info here, and return the string you want
+    // the chatbot to print.
+    public String getInfoAbout(String subject) {
+      return "";
+    }
+
     public Object converse (String human, ConcurrentHashMap<String, Object> myContext) {
         System.out.println("IBMdWServlet converse: " + human);
+        System.out.println("myContext: " + myContext.toString());
+
+        String senderId = myContext.get("sender_id").toString();
+
+        // init user's context if it doesn't exist
+        if (!context.containsKey(senderId)) {
+          initMyContext(senderId);
+        }
+
         // bluemix nlp
         ConversationService service = new ConversationService("2017-05-26");
         // username & password from workspace
@@ -439,44 +461,43 @@ public class NewsServlet extends BaseServlet {
         System.out.println("responses: " + responses.toString());
         System.out.println("message: " + message);
 
+        Map<String, Object> conversationContext = (Map<String, Object>) context.get(senderId);
 
-
-        // TODO: change println to return once all functionality is complete to transition to Conversation API
         String conversationOutput = "";
         switch(message) {
           case "/help":
             conversationOutput = HELP_MESSAGE;
-            context.put("location","");
-            context.put("lastAction", "/help");
+            conversationContext.put("location","");
+            conversationContext.put("lastAction", "/help");
             break;
           case "/polling-location":
             // if location has been saved, use that to get polling location. Otherwise, output generic message
             // asking user for location.
-            if (context.get("location").toString().length() == 0) {
+            if (conversationContext.get("location").toString().length() == 0) {
               conversationOutput = ASK_FOR_LOCATION_MESSAGE;
             }
             else {
-              conversationOutput = getPollingLocation(context.get("location").toString());
+              conversationOutput = getPollingLocation(conversationContext.get("location").toString());
             }
-            context.put("lastAction", "/polling-location");
+            conversationContext.put("lastAction", "/polling-location");
             break;
           case "/representatives":
-            if (context.get("location").toString().length() == 0) {
+            if (conversationContext.get("location").toString().length() == 0) {
               conversationOutput = ASK_FOR_LOCATION_MESSAGE;
             }
             else {
-              conversationOutput = getRepresentatives(context.get("location").toString());
+              conversationOutput = getRepresentatives(conversationContext.get("location").toString());
             }
-            context.put("lastAction", "/representatives");
+            conversationContext.put("lastAction", "/representatives");
             break;
           case "/contact-reps":
-            if (context.get("location").toString().length() == 0) {
+            if (conversationContext.get("location").toString().length() == 0) {
               conversationOutput = ASK_FOR_LOCATION_MESSAGE;
             }
             else {
-              conversationOutput = getRepsContactInfo(context.get("location").toString());
+              conversationOutput = getRepsContactInfo(conversationContext.get("location").toString());
             }
-            context.put("lastAction", "/contact-reps");
+            conversationContext.put("lastAction", "/contact-reps");
             break;
           case "/bills":
             conversationOutput = message;
@@ -487,18 +508,26 @@ public class NewsServlet extends BaseServlet {
             break;
           case "/location": // request interpreted to be a location
             String lastAction = "";
-            if (context.containsKey("lastAction"))
-              lastAction = context.get("lastAction").toString();
-            context.put("location", human);
+            if (conversationContext.containsKey("lastAction"))
+              lastAction = conversationContext.get("lastAction").toString();
+            conversationContext.put("location", human);
             if (conversationOutput.length() == 0) {
               conversationOutput = LOCATION_UPDATED_MESSAGE;
+            }
+            break;
+          case "/information":
+            // TODO: Andy, add all the prefix cases here
+            if (human.startsWith("info about")) {
+              conversationOutput = getInfoAbout(human); 
+            }
+            else {
+              // don't set conversationOutput here, so it'll be handled by the Whoops case.
             }
             break;
           case "/irrelevant":
             conversationOutput = IRRELEVANT_MESSAGE;
             break;
           default:
-            context.put("location","");
             conversationOutput = message;
             break;
         }
