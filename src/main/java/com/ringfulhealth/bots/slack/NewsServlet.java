@@ -120,7 +120,7 @@ public class NewsServlet extends BaseServlet {
                 allfaves.remove(index);
             }
 
-            user.setFaves(String.join(",", faves));
+            //user.setFaves(String.join(",", faves));
             dm.saveUser(user);
 
             try {
@@ -237,7 +237,7 @@ public class NewsServlet extends BaseServlet {
                     return replies;
 
                 } else {
-                    user.setFaves(String.join(",", faves));
+                    //user.setFaves(String.join(",", faves));
                     dm.saveUser(user);
                     try {
                         return createButtons(

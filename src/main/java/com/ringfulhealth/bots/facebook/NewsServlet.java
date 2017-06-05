@@ -37,7 +37,7 @@ import org.json.*;
 
 public class NewsServlet extends BaseServlet {
 
-    public static final String HELP_MESSAGE = "I'm here to help you get involved in local politics. Here are some sample queries you can make:\n Where is my polling location?\n Who are my representatives?\n How do I contact my representatives?\n I want to know about recent bills.";
+    public static final String HELP_MESSAGE = "I'm here to help you get involved in local politics. Here are some sample queries you can make:\n Where is my polling location?\n Who are my representatives?\n How do I contact my representatives?\n I want to know about recent bills.\n Tell me about a candidate or political figure.";
     public static final String IRRELEVANT_MESSAGE = "Sorry, I could not understand that question. Please type \"help\" to find out what you can ask me!";
     public static final String LOCATION_UPDATED_MESSAGE = "Your location was updated!";
     public static final String ASK_FOR_LOCATION_MESSAGE = "Please enter your address first, and retry your query.";
@@ -429,10 +429,75 @@ public class NewsServlet extends BaseServlet {
          return "";
     }
 
-    // TODO: Andy, put ur code for wiki info here, and return the string you want
-    // the chatbot to print.
-    public String getInfoAbout(String subject) {
-      return "";
+    public String getInfoAbout(String query) {
+      String [] splitQuery = query.split(" on ");
+      if (splitQuery.length < 2) {
+        splitQuery = query.split(" about ");
+      }
+
+      for (String s: splitQuery) {
+        System.out.print(s);
+      }
+
+      String candidate = splitQuery[1];
+      candidate = candidate.replace(" ", "%20");
+
+      String encodedUrl = null;
+
+      try {
+        encodedUrl = URLEncoder.encode(candidate, "UTF-8");
+      } catch (UnsupportedEncodingException ignored) {
+        // Can be safely ignored because UTF-8 is always supported
+      }
+
+      String urlString = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exintro=&titles=" + candidate + "&redirects=1";
+
+      System.out.print(urlString);
+      try {
+        URL url = new URL(urlString);
+        HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+        // optional default is GET
+        con.setRequestMethod("GET");
+
+        //add request header
+        con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+        int responseCode = con.getResponseCode();
+        System.out.println("\nSending 'GET' request to URL : " + url);
+        System.out.println("Response Code : " + responseCode);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+
+        while ((inputLine = in.readLine()) != null) {
+          response.append(inputLine);
+          System.out.println(inputLine);
+        }
+        in.close();
+
+        JSONTokener tokener = new JSONTokener(response.toString());
+        JSONObject obj = new JSONObject(tokener);
+
+        JSONObject result = obj.getJSONObject("query").getJSONObject("pages");
+
+        String key = "";
+        for(Iterator iter = result.keys(); iter.hasNext();) {
+          key = (String) iter.next();
+        }
+
+        String extract = result.getJSONObject(key).getString("extract");
+        String noHTMLString = extract.replaceAll("\\<.*?>","");
+
+        String responseToHuman = noHTMLString.substring(0, Math.min(noHTMLString.length(), 637));
+
+        return responseToHuman + "...";
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+      return "Sorry, I couldn't find any information on that person.";
     }
 
     public Object converse (String human, ConcurrentHashMap<String, Object> myContext) {
@@ -516,9 +581,10 @@ public class NewsServlet extends BaseServlet {
             }
             break;
           case "/information":
-            // TODO: Andy, add all the prefix cases here
-            if (human.startsWith("info about")) {
-              conversationOutput = getInfoAbout(human); 
+            if (human.toLowerCase().contains("tell me about") || human.contains("more information") ||
+                              human.contains("information about") || human.contains("information on") ||
+                              human.contains("info about") || human.contains("info on")) {
+              conversationOutput = getInfoAbout(human);
             }
             else {
               // don't set conversationOutput here, so it'll be handled by the Whoops case.
