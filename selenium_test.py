@@ -6,10 +6,11 @@ from selenium.webdriver.support.expected_conditions import \
 import time
 import unittest
 import random
+import os
 
 botname = "IBM Civic Engagement Bot"
-usr = ""    # Enter Facbeook Username (Email) Here
-pwd = ""    # Enter Facebook Password Credentials Here
+usr =  os.environ['fb_user']   # Enter Facbeook Username (Email) Here
+pwd = os.environ['fb_pw']   # Enter Facebook Password Credentials Here
 searchElemClass = "_58al"
 
 
