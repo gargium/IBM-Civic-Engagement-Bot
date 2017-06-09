@@ -311,17 +311,20 @@ public class NewsServlet extends BaseServlet {
           System.out.println(obj);
 
           JSONArray pollingLocations = obj.getJSONArray("pollingLocations");
+          System.out.println("got the pollinglocations object");
+          
 
           //pollingAddress
           JSONObject addressInfoObj = (JSONObject) pollingLocations.get(0);
-
+          System.out.println("got the addressinfoobj object");
 
           JSONObject addressInfo = (JSONObject) addressInfoObj.getJSONObject("address");
+          System.out.println("got the addressinfo object");
 
-
-
-
-          String locationName = addressInfo.getString("locationName");
+          String locationName = "";
+          if (addressInfo.has("locationName"))
+            locationName = addressInfo.getString("locationName");
+        
           String line1 = addressInfo.getString("line1");
           String city = addressInfo.getString("city");
           String state = addressInfo.getString("state");
@@ -334,17 +337,34 @@ public class NewsServlet extends BaseServlet {
 
           //polling notes:
           // JSONObject pollingNotesObj = (JSONObject) addressInfoObj.getJSONObject("notes");
-          String pollingNotes = addressInfoObj.getString("notes");
-
+          String pollingNotes = "";
+          if (addressInfoObj.isNull("notes"))
+            pollingNotes = addressInfoObj.getString("notes");
+          
           System.out.println("polling notes:" + pollingNotes);
 
           //polling hours:
           // JSONObject pollingHoursObj = (JSONObject) addressInfoObj.getJSONObject("pollingHours");
-          String pollingHours = addressInfoObj.getString("pollingHours");
+          String pollingHours = "";
+          if (addressInfoObj.isNull("pollingHours"))
+            pollingHours = addressInfoObj.getString("pollingHours");
 
           System.out.println("polling hours: " + pollingHours);
 
-          String responseToHuman = "Your polling location is " + locationName + ", located on " + line1 + ", " + city + ", " + state + " " + zip + ". " + "The hours are " + pollingHours + ". Note: " + pollingNotes + ".";
+          if (locationName != "") {
+            locationName += ", located on";
+          }
+
+          if (pollingNotes != "") {
+            pollingNotes = "Note: " + pollingNotes + ".";
+          }
+
+          if (pollingHours != "") {
+            pollingHours = "The hours are " + pollingHours + ".";            
+          }
+
+          String addressName = locationName + ",";
+          String responseToHuman = "Your polling location is " + locationName + line1 + ", " + city + ", " + state + " " + zip + ". " + pollingHours + pollingNotes;
 
           return responseToHuman;
       }
@@ -420,7 +440,7 @@ public class NewsServlet extends BaseServlet {
            for (String b : bills) {
                responseToHuman += (b + "\n\n");
            }
-           responseToHuman += "\n\nIf you would like to know more about any of these, please type in name of the bill as follows: 'Summary: name_of_bill'";
+           responseToHuman += "\n\nIf you would like to know more about any of these, please type in name of the bill as follows: 'Tell me about name_of_bill'";
 
            return responseToHuman;
          }
@@ -557,6 +577,7 @@ public class NewsServlet extends BaseServlet {
             conversationContext.put("lastAction", "/representatives");
             break;
           case "/contact-reps":
+          case "/donate-reps":
             if (conversationContext.get("location").toString().length() == 0) {
               conversationOutput = ASK_FOR_LOCATION_MESSAGE;
             }
