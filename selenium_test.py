@@ -50,51 +50,53 @@ class ChatBotTestCase(unittest.TestCase):
         response = responses[-1].get_attribute('innerHTML')
         return response.encode('ascii','ignore')
 
-    def test_hello(self):
+    def test_0_hello(self):
         print "Selecting randomized greeting."
         print "Testing basic greeting."
         response = self.getBotResponse("hello")
         valid_responses = ["Hello! How can I help you?", "Hi! How can I help you?", "Good Day! How can I help you?"]
         self.assertTrue(response in valid_responses, "Wrong response to 'hello'." )
 
-    def test_clear_location(self):
+    def test_1_clear_location(self):
         print "Clearing location."
         response = self.getBotResponse("clear location")
         valid_response = "Your location was cleared!"
         self.assertEqual(response, valid_response, "Wrong reponse to 'clear location'!")
 
-    def test_polling_location_without_address(self):
+    def test_2_polling_location_without_address(self):
         print "Testing polling location without address."
         self.getBotResponse("clear location")
         response = self.getBotResponse("what's my polling location?")
         valid_response = "Please enter your address first, and retry your query."
         self.assertEqual(response, valid_response, "Wrong reponse to 'polling location' w/o address!")
 
-    def test_polling_location_with_address(self):
+    def test_3_polling_location_with_address(self):
         print "Testing polling location."
         self.getBotResponse("443 Midvale Ave, Los Angeles, CA 90024")
         response = self.getBotResponse("what's my polling location?")
         self.assertTrue(response.startswith("Your polling location is "))
 
-    def test_representatives(self):
+    def test_4_representatives(self):
         print "Testing representatives."
         response = self.getBotResponse("Who are my representatives?")
         self.assertTrue(response.startswith("Your representatives are"))
 
-    def contact_representatives(self):
+    def test_5_contact_representatives(self):
         print "Testing representatives contacts."
         response = self.getBotResponse("Contact my reps.")
         self.assertTrue("Website" in response)
 
-    def test_bills(self):
-        print "Testing bills (1/2) : SOPA"
-        print "Testing bills (2/2) : National Firearms Act"
+    def test_6_bills(self):
+        print "Testing bills (1/3) : SOPA"
         response = self.getBotResponse("Tell me about SOPA")
         self.assertTrue(response.startswith("The Stop Online Piracy Act (SOPA) was a controversial United States bill"))
-        response = self.getBotResponse("Give me information on National Firearms Act")
-        self.assertTrue("imposes a statutory excise tax on the manufacture and transfer of certain firearms" in response)
+        print "Testing bills (2/3) : National Firearms Act"
+        self.getBotResponse("tell me about recent bills regarding")
+        response = self.getBotResponse("healthcare")
+        self.assertTrue("Title" in response)
+        print "Testing bills (3/3) : Healthcare"
 
-    def test_politicians_info(self):
+    def test_7_politicians_info(self):
         queryList = ["Give me info on", "Give me information on", "Tell me about"]
         responseMap = {
                     'Donald Trump': '45th and current President of the United States',
