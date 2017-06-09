@@ -79,11 +79,13 @@ class ChatBotTestCase(unittest.TestCase):
 
     def test_4_representatives(self):
         print "Testing representatives."
+        self.getBotResponse("443 Midvale Ave, Los Angeles, CA 90024")
         response = self.getBotResponse("Who are my representatives?")
         self.assertTrue(response.startswith("Your representatives are"))
 
     def test_5_contact_representatives(self):
         print "Testing representatives contacts."
+        self.getBotResponse("443 Midvale Ave, Los Angeles, CA 90024")
         response = self.getBotResponse("Contact my reps.")
         self.assertTrue("Website" in response)
 
@@ -112,7 +114,6 @@ class ChatBotTestCase(unittest.TestCase):
             print "Testing politicians (%d/%d) : '%s'" % (i, len(responseMap), key)
             response = self.getBotResponse(random.choice(queryList) + " " + key)
             self.assertTrue(responseMap[key] in response)
-
 
     @classmethod
     def tearDownClass(inst):
