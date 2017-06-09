@@ -77,6 +77,16 @@ class ChatBotTestCase(unittest.TestCase):
         response = self.getBotResponse("what's my polling location?")
         self.assertTrue(response.startswith("Your polling location is "))
 
+    def test_representatives(self):
+        print "Testing representatives."
+        response = self.getBotResponse("Who are my representatives?")
+        self.assertTrue(response.startswith("Your representatives are"))
+
+    def contact_representatives(self):
+        print "Testing representatives contacts."
+        response = self.getBotResponse("Contact my reps.")
+        self.assertTrue("Website" in response)
+
     def test_bills(self):
         print "Testing bills (1/2) : SOPA"
         print "Testing bills (2/2) : National Firearms Act"
