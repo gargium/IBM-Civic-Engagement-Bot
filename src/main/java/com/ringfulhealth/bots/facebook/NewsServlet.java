@@ -41,6 +41,7 @@ public class NewsServlet extends BaseServlet {
     public static final String IRRELEVANT_MESSAGE = "Sorry, I could not understand that question. Please type \"help\" to find out what you can ask me!";
     public static final String LOCATION_UPDATED_MESSAGE = "Your location was updated!";
     public static final String ASK_FOR_LOCATION_MESSAGE = "Please enter your address first, and retry your query.";
+    public static final String CLEAR_LOCATION_MESSAGE = "Your location was cleared!";
 
 
     // context maps an integer (senderId -- each user has its own id) to a Map<String, Object>
@@ -579,6 +580,11 @@ public class NewsServlet extends BaseServlet {
             if (conversationOutput.length() == 0) {
               conversationOutput = LOCATION_UPDATED_MESSAGE;
             }
+            break;
+          case "/clear-location":
+            conversationContext.put("location", "");
+            conversationContext.put("lastAction", "/clear-location");
+            conversationOutput = CLEAR_LOCATION_MESSAGE;
             break;
           case "/information":
             if (human.toLowerCase().contains("tell me about") || human.contains("more information") ||
