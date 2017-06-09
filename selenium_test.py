@@ -5,6 +5,7 @@ from selenium.webdriver.support.expected_conditions import \
         staleness_of
 import time
 import unittest
+import random
 
 botname = "IBM Civic Engagement Bot"
 usr = ""    # Enter Facbeook Username (Email) Here
@@ -50,26 +51,55 @@ class ChatBotTestCase(unittest.TestCase):
         return response.encode('ascii','ignore')
 
     def test_hello(self):
+        print "Selecting randomized greeting."
+        print "Testing basic greeting."
         response = self.getBotResponse("hello")
-        print response
         valid_responses = ["Hello! How can I help you?", "Hi! How can I help you?", "Good Day! How can I help you?"]
         self.assertTrue(response in valid_responses, "Wrong response to 'hello'." )
 
     def test_clear_location(self):
+        print "Clearing location."
         response = self.getBotResponse("clear location")
         valid_response = "Your location was cleared!"
         self.assertEqual(response, valid_response, "Wrong reponse to 'clear location'!")
 
     def test_polling_location_without_address(self):
+        print "Testing polling location without address."
         self.getBotResponse("clear location")
         response = self.getBotResponse("what's my polling location?")
         valid_response = "Please enter your address first, and retry your query."
         self.assertEqual(response, valid_response, "Wrong reponse to 'polling location' w/o address!")
 
     def test_polling_location_with_address(self):
+        print "Testing polling location."
         self.getBotResponse("443 Midvale Ave, Los Angeles, CA 90024")
         response = self.getBotResponse("what's my polling location?")
         self.assertTrue(response.startswith("Your polling location is "))
+
+    def test_bills(self):
+        print "Testing bills (1/2) : SOPA"
+        print "Testing bills (2/2) : National Firearms Act"
+        response = self.getBotResponse("Tell me about SOPA")
+        self.assertTrue(response.startswith("The Stop Online Piracy Act (SOPA) was a controversial United States bill"))
+        response = self.getBotResponse("Give me information on National Firearms Act")
+        self.assertTrue("imposes a statutory excise tax on the manufacture and transfer of certain firearms" in response)
+
+    def test_politicians_info(self):
+        queryList = ["Give me info on", "Give me information on", "Tell me about"]
+        responseMap = {
+                    'Donald Trump': '45th and current President of the United States',
+                    'Mike Pence': '48th and current Vice President of the United States',
+                    'Jerry Brown': '39th Governor of California since 2011',
+                    'Dianne Feinstein': 'senior United States Senator from California',
+                    'Darrell Issa': 'Republican U.S. Representative for California\'s 49th congressional district',
+                    'John McCain': 'senior United States Senator from Arizona',
+                    'Kathy Hochul': '77th and current Lieutenant Governor of the State of New York'
+                    }
+        for i, key in enumerate(responseMap.keys()):
+            print "Testing politicians (%d/%d) : '%s'" % (i, len(responseMap), key)
+            response = self.getBotResponse(random.choice(queryList) + " " + key)
+            self.assertTrue(responseMap[key] in response)
+
 
     @classmethod
     def tearDownClass(inst):
